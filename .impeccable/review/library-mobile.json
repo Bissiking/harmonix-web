@@ -1,0 +1,33 @@
+{
+  "viewport": {
+    "w": 390,
+    "h": 844
+  },
+  "overflowX": false,
+  "hoverNone": false,
+  "gridCards": 0,
+  "fav": null,
+  "play": null,
+  "player": {
+    "x": 0,
+    "y": 743,
+    "w": 390,
+    "h": 101
+  },
+  "volumeDisplay": "flex",
+  "stateDisplay": "flex",
+  "stateText": "EN PAUSE",
+  "nowPlaying": {
+    "x": 14,
+    "y": 78,
+    "w": 362,
+    "h": 191
+  },
+  "nowPlayingLabel": "En lecture",
+  "libraryTitle": "Toute la bibliothèque",
+  "brandVersion": "V3.0.0",
+  "sidebarFooter": "HARMONIX: V3.0.0\nPROPULSÉ PAR SONORA",
+  "meterDisplay": "flex",
+  "menuDisplay": "grid",
+  "consoleErrors": []
+}

@@ -1,0 +1,19 @@
+{
+  "vw": 1440,
+  "vh": 900,
+  "dw": 1440,
+  "overflowX": false,
+  "player": {
+    "x": 232,
+    "y": 816,
+    "w": 1208,
+    "h": 84
+  },
+  "playerLeft": 315,
+  "playerCenter": 567,
+  "playerRight": 245,
+  "rail": 472,
+  "menuToggleDisplay": "none",
+  "sidebarTransform": "none",
+  "onairTitleOverflow": false
+}

@@ -1,3 +1,8 @@
+.backup/
+node_modules/
+web/dist/
+.env
+
 # Logs
 logs
 *.log

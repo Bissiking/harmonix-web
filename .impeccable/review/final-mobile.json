@@ -1,0 +1,40 @@
+{
+  "viewport": {
+    "w": 390,
+    "h": 844
+  },
+  "overflowX": false,
+  "hoverNone": false,
+  "gridCards": 42,
+  "fav": {
+    "rect": {
+      "x": 134,
+      "y": 401,
+      "w": 44,
+      "h": 44
+    },
+    "opacity": "1",
+    "tag": "BUTTON",
+    "label": "Ajouter La dernière émission aux favoris"
+  },
+  "play": {
+    "rect": {
+      "x": 135,
+      "y": 513,
+      "w": 34,
+      "h": 34
+    },
+    "opacity": "1"
+  },
+  "player": {
+    "x": 0,
+    "y": 743,
+    "w": 390,
+    "h": 101
+  },
+  "volumeDisplay": "flex",
+  "airDisplay": "flex",
+  "meterDisplay": "flex",
+  "menuDisplay": "grid",
+  "consoleErrors": []
+}

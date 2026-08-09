@@ -1,0 +1,19 @@
+{
+  "vw": 390,
+  "vh": 844,
+  "dw": 390,
+  "overflowX": false,
+  "player": {
+    "x": 0,
+    "y": 760,
+    "w": 390,
+    "h": 84
+  },
+  "playerLeft": 133,
+  "playerCenter": 181,
+  "playerRight": 36,
+  "rail": 93,
+  "menuToggleDisplay": "grid",
+  "sidebarTransform": "matrix(1, 0, 0, 1, -232, 0)",
+  "onairTitleOverflow": false
+}
