@@ -1,6 +1,7 @@
 <template>
   <div class="hx-page">
     <div v-if="loading" class="hx-loading">Chargement…</div>
+    <div v-else-if="error" class="hx-error" role="alert"><p>Cet album est indisponible.</p><button class="hx-btn" @click="load">Réessayer</button></div>
     <template v-else-if="album">
       <div class="hx-detail-head">
         <img class="hx-detail-cover" :src="cover(album.cover)" :alt="album.title" />
@@ -33,10 +34,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import TrackList from "../components/TrackList.vue";
-import { api, coverUrl } from "../api/client.js";
+import { coverUrl } from "../api/client.js";
+import { library } from "../api/library.js";
 import { usePlayer } from "../stores/player.js";
 import { useFavorites } from "../stores/favorites.js";
 import { toast } from "../stores/toasts.js";
@@ -49,6 +51,7 @@ const favorites = useFavorites();
 const album = ref(null);
 const tracks = ref([]);
 const loading = ref(true);
+const error = ref(false);
 
 function cover(c) {
   return coverUrl(c) || "/images/default_cover.svg";
@@ -60,13 +63,15 @@ function isFav(track) {
 
 async function load() {
   loading.value = true;
+  error.value = false;
   try {
-    const data = await api.get(`/api/albums/${encodeURIComponent(route.params.id)}`, { timeout: 10000 });
+    const data = await library.album(route.params.id);
     album.value = data?.album || data;
     tracks.value = Array.isArray(data?.tracks) ? data.tracks : data?.items || [];
     await favorites.loadFavorites().catch(() => {});
   } catch {
     album.value = null;
+    error.value = true;
   } finally {
     loading.value = false;
   }
@@ -101,5 +106,5 @@ function openAlbum(track) {
   }
 }
 
-onMounted(load);
+watch(() => route.params.id, load, { immediate: true });
 </script>

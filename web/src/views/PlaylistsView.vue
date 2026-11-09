@@ -1,64 +1,37 @@
 <template>
   <div class="hx-page">
-    <div class="hx-section-bar">
-      <h2 class="hx-section-title">Playlists</h2>
-      <button class="hx-btn hx-btn-primary" @click="createNew">
-        <svg viewBox="0 0 24 24" class="hx-ico"><path d="M12 5v14M5 12h14" /></svg>
-        <span>Nouvelle playlist</span>
-      </button>
-    </div>
-
-    <div v-if="loading" class="hx-loading">Chargement des playlists…</div>
-    <div v-else-if="!playlists.length" class="hx-empty">
-      <p>Aucune playlist pour l'instant. Crée-en une !</p>
-    </div>
+    <div class="hx-page-heading"><div><h1>Vos playlists</h1><p>La bonne musique, dans le bon ordre.</p></div></div>
+    <form class="hx-inline-form" @submit.prevent="createNew">
+      <label for="playlist-name">Créer une playlist</label>
+      <div><input id="playlist-name" v-model="name" maxlength="200" placeholder="Donnez-lui un nom" required /><button class="hx-btn hx-btn-primary" :disabled="saving || !name.trim()">{{ saving ? 'Création…' : 'Créer' }}</button></div>
+    </form>
+    <div v-if="loading" class="hx-loading" role="status">Chargement des playlists…</div>
+    <div v-else-if="error" class="hx-error"><p>Vos playlists sont indisponibles.</p><button class="hx-btn" @click="load">Réessayer</button></div>
+    <div v-else-if="!playlists.length" class="hx-empty"><p>Votre première playlist commence par un nom, puis quelques morceaux.</p></div>
     <div v-else class="hx-card-grid">
-      <RouterLink v-for="playlist in playlists" :key="playlist.id" :to="{ name: 'playlist-detail', params: { id: playlist.id } }" class="hx-card hx-card--link">
-        <div class="hx-card-cover hx-card-cover--placeholder">
-          <svg viewBox="0 0 24 24" class="hx-ico"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="4.5" /><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" /></svg>
-        </div>
-        <div class="hx-card-info">
-          <div class="hx-card-title">{{ playlist.name }}</div>
-          <div class="hx-card-sub">{{ playlist.track_count ?? playlist.tracks?.length ?? 0 }} morceaux</div>
-        </div>
+      <RouterLink v-for="playlist in playlists" :key="playlist.id" :to="{ name: 'playlist-detail', params: { id: playlist.id } }" class="hx-card">
+        <img class="hx-card-cover" :src="coverUrl(playlist.cover)" alt="" loading="lazy" />
+        <div class="hx-card-info"><strong class="hx-card-title">{{ playlist.name }}</strong><span class="hx-card-sub">{{ playlist.track_count ?? 0 }} morceaux · {{ playlist.visibility === 'public' ? 'Publique' : 'Privée' }}</span></div>
       </RouterLink>
     </div>
   </div>
 </template>
-
 <script setup>
 import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
-import { api } from "../api/client.js";
+import { useRouter, RouterLink } from "vue-router";
+import { library } from "../api/library.js";
+import { coverUrl } from "../api/client.js";
 import { toast } from "../stores/toasts.js";
-
-const router = useRouter();
-const playlists = ref([]);
-const loading = ref(true);
-
+const router = useRouter(), playlists = ref([]), loading = ref(true), error = ref(false), saving = ref(false), name = ref("");
 async function load() {
-  loading.value = true;
-  try {
-    const data = await api.get("/api/playlists", { timeout: 10000 });
-    playlists.value = Array.isArray(data) ? data : data?.items || [];
-  } catch {
-    playlists.value = [];
-  } finally {
-    loading.value = false;
-  }
+  loading.value = true; error.value = false;
+  try { playlists.value = await library.playlists(); } catch { error.value = true; } finally { loading.value = false; }
 }
-
 async function createNew() {
-  const name = window.prompt("Nom de la playlist :", "Ma playlist");
-  if (!name?.trim()) return;
-  try {
-    const data = await api.post("/api/playlists", { name: name.trim() });
-    toast("Playlist créée", { icon: "check" });
-    router.push({ name: "playlist-detail", params: { id: data?.id ?? data?._id } });
-  } catch {
-    toast("Création impossible", { type: "error", icon: "alert" });
-  }
+  if (!name.value.trim() || saving.value) return;
+  saving.value = true;
+  try { const playlist = await library.createPlaylist(name.value.trim()); toast("Playlist créée"); router.push({ name: "playlist-detail", params: { id: playlist.id } }); }
+  catch { toast("Création impossible. Réessayez.", { type: "error" }); } finally { saving.value = false; }
 }
-
 onMounted(load);
 </script>

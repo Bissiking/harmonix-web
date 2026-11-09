@@ -6,6 +6,7 @@
     </div>
 
     <div v-if="loading" class="hx-loading">Chargement des favoris…</div>
+    <div v-else-if="error" class="hx-error" role="alert"><p>Vos favoris sont momentanément indisponibles.</p><button class="hx-btn" @click="load">Réessayer</button></div>
     <div v-else-if="!tracks.length" class="hx-empty">
       <svg viewBox="0 0 24 24" class="hx-empty-ico"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1L12 21l7.7-7.6 1.1-1a5.5 5.5 0 0 0 0-7.8z" /></svg>
       <p>Ajoute des morceaux à tes favoris pour les retrouver ici.</p>
@@ -37,6 +38,7 @@ const player = usePlayer();
 const favorites = useFavorites();
 const tracks = ref([]);
 const loading = ref(true);
+const error = ref(false);
 
 function isFav(track) {
   return favorites.state.ids.has(String(track.id));
@@ -44,8 +46,11 @@ function isFav(track) {
 
 async function load() {
   loading.value = true;
+  error.value = false;
   try {
     tracks.value = await favorites.loadFavorites();
+  } catch {
+    error.value = true;
   } finally {
     loading.value = false;
   }

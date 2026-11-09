@@ -4,8 +4,13 @@ import { fileURLToPath, URL } from "node:url";
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  const apiTarget = `http://localhost:${env.HARMONIX_PORT || "6003"}`;
+  const apiTarget = env.SONORA_URL || "http://localhost:6002";
   const webPort = Number(env.HARMONIX_WEB_PORT || "5173");
+  const proxy = {
+    "/auth": { target: apiTarget, changeOrigin: true },
+    "/api": { target: apiTarget, changeOrigin: true, ws: true },
+    "/covers": { target: apiTarget, changeOrigin: true },
+  };
 
   return {
     root: "web",
@@ -18,16 +23,10 @@ export default defineConfig(({ mode }) => {
     server: {
       port: webPort,
       strictPort: true,
-      proxy: {
-        // Le serveur Harmonix gère l'auth et proxy vers Sonora.
-        "/auth": apiTarget,
-        "/api": {
-          target: apiTarget,
-          ws: true,
-        },
-        "/covers": apiTarget,
-      },
+      // Relais de développement uniquement : toute la logique est dans Sonora.
+      proxy,
     },
+    preview: { port: webPort, strictPort: true, proxy },
     build: {
       outDir: "dist",
       emptyOutDir: true,

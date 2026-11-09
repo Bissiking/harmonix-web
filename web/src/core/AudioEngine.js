@@ -10,6 +10,14 @@ export class AudioEngine {
     this._source = null;
     this._freqData = null;
     this._webAudioReady = false;
+    this._pendingSeek = null;
+    this.audio.addEventListener("loadedmetadata", () => {
+      if (this._pendingSeek !== null) {
+        const time = this._pendingSeek;
+        this._pendingSeek = null;
+        this.seek(time);
+      }
+    });
   }
 
   _initWebAudio() {
@@ -39,6 +47,7 @@ export class AudioEngine {
   }
 
   load(src) {
+    this._pendingSeek = null;
     this.audio.src = src;
     this.audio.load();
   }
@@ -52,7 +61,11 @@ export class AudioEngine {
   }
 
   pause() { this.audio.pause(); }
-  seek(time) { this.audio.currentTime = time; }
+  seek(time) {
+    if (!Number.isFinite(time)) return;
+    if (!this.audio.readyState) { this._pendingSeek = Math.max(0, time); return; }
+    this.audio.currentTime = Math.max(0, Math.min(time, this.duration || time));
+  }
   setVolume(v) { this.audio.volume = Math.max(0, Math.min(1, v)); }
   setMuted(muted) { this.audio.muted = Boolean(muted); }
 
@@ -65,7 +78,7 @@ export class AudioEngine {
   on(event, cb, opts) { this.audio.addEventListener(event, cb, opts); }
   off(event, cb, opts) { this.audio.removeEventListener(event, cb, opts); }
 
-  get duration() { return this.audio.duration || 0; }
+  get duration() { return Number.isFinite(this.audio.duration) ? this.audio.duration : 0; }
   get currentTime() { return this.audio.currentTime || 0; }
   get paused() { return this.audio.paused; }
   get volume() { return this.audio.volume; }

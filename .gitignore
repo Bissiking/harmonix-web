@@ -1,6 +1,7 @@
 .backup/
 node_modules/
 web/dist/
+.impeccable/
 .env
 
 # Logs

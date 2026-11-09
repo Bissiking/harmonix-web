@@ -38,7 +38,7 @@
       </div>
       <div class="hx-settings-row">
         <label for="hx-repeat">Répétition</label>
-        <select :value="player.state.repeat" @change="player.setRepeat($event.target.value)">
+        <select id="hx-repeat" :value="player.state.repeat" @change="player.setRepeat($event.target.value)">
           <option value="none">Aucune</option>
           <option value="all">Toute la liste</option>
           <option value="one">Morceau unique</option>

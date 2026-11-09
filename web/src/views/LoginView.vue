@@ -1,54 +1,39 @@
 <template>
-  <div class="hx-login">
-    <div class="hx-login-card">
-      <div class="hx-login-brand">
-        <span class="hx-brand-logo hx-brand-logo--lg">
-          <svg viewBox="0 0 32 32" class="hx-ico"><path d="M10 24V12l14-3v11" /><circle cx="10" cy="24" r="2.4" fill="currentColor" stroke="none" /><circle cx="24" cy="20" r="2.4" fill="currentColor" stroke="none" /></svg>
-        </span>
-        <h1>Harmonix</h1>
-        <p class="hx-login-sub">Musiques Suno &amp; ChatGPT, propulsé par Sonora</p>
-      </div>
-
-      <p v-if="errorMessage" class="hx-login-error">{{ errorMessage }}</p>
-
-      <button v-if="hasClientId" class="hx-btn hx-btn-primary hx-btn-lg" :disabled="loading" @click="startLogin">
-        <svg v-if="loading" viewBox="0 0 24 24" class="hx-ico hx-spin"><path d="M12 2a10 10 0 1 0 10 10" /></svg>
-        <svg v-else viewBox="0 0 24 24" class="hx-ico"><path d="M12 3v3M5.6 5.6l2.2 2.2M3 12h3M5.6 18.4l2.2-2.2M12 18v3M18.4 18.4l-2.2-2.2M18 12h3" /><circle cx="12" cy="12" r="2.6" /></svg>
-        <span>Se connecter avec Kyros</span>
-      </button>
-      <p v-else class="hx-login-sub">Connexion indisponible (Kyros non configuré).</p>
-    </div>
-  </div>
+  <main class="hx-login">
+    <div class="hx-login-art"><img src="/branding/Icon-512.png" alt="" /><h1>Harmonix</h1><p>La musique vous accompagne.</p><span>Web V5 · Moon Resonance</span></div>
+    <section class="hx-login-card" aria-labelledby="login-title">
+      <img class="hx-login-logo" src="/branding/Icon-192.png" alt="" />
+      <h2 id="login-title">Retrouvez votre musique.</h2>
+      <p>Votre bibliothèque Sonora, vos favoris et vos playlists, réunis dans votre navigateur.</p>
+      <p v-if="errorMessage || session.state.error" class="hx-login-error" role="alert">{{ errorMessage || session.state.error }}</p>
+      <button v-if="availability === 'available'" class="hx-btn hx-btn-primary hx-btn-lg" :disabled="loading" @click="startLogin">{{ loading ? 'Ouverture de Kyros…' : 'Se connecter avec Kyros' }}</button>
+      <p v-else-if="availability === 'loading'" role="status">Vérification de la connexion…</p>
+      <template v-else><p role="status">{{ availabilityMessage }}</p><button class="hx-btn" @click="loadConfig">Réessayer</button></template>
+      <p class="hx-login-note">Votre compte reste géré par Kyros.</p>
+    </section>
+  </main>
 </template>
-
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { api } from "../api/client.js";
+import { loginAvailability } from "../api/auth.js";
 import { useSession } from "../stores/session.js";
-
-const session = useSession();
-const loading = ref(false);
-const hasClientId = ref(false);
-const errorMessage = ref("");
-
-onMounted(async () => {
-  try {
-    const config = await api.get("/auth/config");
-    hasClientId.value = Boolean(config?.hasClientId);
-  } catch {
-    hasClientId.value = false;
-  }
-  const q = new URLSearchParams(location.search);
-  if (q.get("error")) {
-    errorMessage.value = `Connexion refusée (${q.get("error")}). Réessaie.`;
-  }
-  if (session.state.authenticated) {
-    location.href = "/";
-  }
-});
-
-function startLogin() {
-  loading.value = true;
-  location.href = "/auth/login";
+const session = useSession(), loading = ref(false), availability = ref('loading'), errorMessage = ref("");
+const availabilityMessage = computed(() => ({
+  unconfigured: 'La connexion Kyros n’est pas configurée dans Sonora.',
+  unreachable: 'Impossible de joindre Sonora pour vérifier la connexion. Réessayez dans un instant.',
+  incompatible: 'Sonora n’a pas fourni d’informations de connexion reconnues. Vérifiez sa version et réessayez.',
+}[availability.value] || ''));
+async function loadConfig() {
+  availability.value = 'loading';
+  try { availability.value = loginAvailability(await api.get('/auth/config')); }
+  catch { availability.value = 'unreachable'; }
 }
+onMounted(() => {
+  loadConfig();
+  const query = new URLSearchParams(location.search);
+  if (query.get('error') || query.get('sso_error')) errorMessage.value = 'La connexion n’a pas abouti. Vous pouvez réessayer.';
+  if (session.state.authenticated) location.href = '/';
+});
+function startLogin() { loading.value = true; session.login(); }
 </script>

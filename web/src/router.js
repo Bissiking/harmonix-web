@@ -17,6 +17,7 @@ const routes = [
       { path: "queue", name: "queue", component: () => import("./views/QueueView.vue") },
       { path: "parametres", name: "settings", component: () => import("./views/SettingsView.vue") },
       { path: "piste/:id", name: "track", component: () => import("./views/TrackView.vue") },
+      { path: "lecture", name: "player", component: () => import("./views/TrackView.vue") },
       { path: "rifts", name: "rifts", component: () => import("./views/RiftsView.vue") },
     ],
   },
@@ -40,10 +41,10 @@ function ensureSession() {
 router.beforeEach(async (to) => {
   await ensureSession();
   if (to.name !== "login") {
-    // Sonora exige un token Kyros : toutes les pages nécessitent l'auth.
+    // Sonora contrôle la session HttpOnly et ses permissions.
     const { state } = useSession();
     if (!state.authenticated && !state.loading) {
-      return { name: "login" };
+      return { name: "login", query: to.query };
     }
   }
   return true;

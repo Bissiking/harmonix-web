@@ -3,17 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#06080f">
+  <meta name="theme-color" content="#0a0f2b">
+  <meta name="description" content="Harmonix V5 : votre bibliothèque musicale Sonora, vos playlists, vos favoris et vos paroles dans le navigateur.">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/branding/Icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=Saira:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230d1220'/%3E%3Cpath d='M10 24V12l14-3v11' stroke='%23f6c768' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='10' cy='24' r='2.6' fill='%23f6c768'/%3E%3Ccircle cx='24' cy='20' r='2.6' fill='%23f6c768'/%3E%3C/svg%3E">
-  <title>Harmonix · Bibliothèque musicale</title>
+  <link href="https://fonts.googleapis.com/css2?family=Saira:wght@400;500;600;650;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="/branding/favicon.png">
+  <title>Harmonix V5 · Votre musique</title>
   <script>
     // Applique le thème avant le premier paint (anti-flash).
     (function () {
       try {
-        var t = JSON.parse(localStorage.getItem('harmonix:theme') || 'null');
+        var t = JSON.parse(localStorage.getItem('harmonix:v5:theme') || 'null');
         var r = document.documentElement;
         if (t && t.gold) r.style.setProperty('--gold', t.gold);
         if (t && t.goldLight) r.style.setProperty('--gold-light', t.goldLight);

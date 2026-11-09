@@ -24,7 +24,7 @@ export class PlayerController {
 
   // ── Playlist ──────────────────────────────────────────────
 
-  setPlaylist(list, { keepTrackId = null, seed } = {}) {
+  setPlaylist(list, { keepTrackId = null, seed, preserveCustomTrack = false } = {}) {
     this.playlist = Array.isArray(list) ? list : [];
     const keepIndex = keepTrackId ? this.playlist.findIndex((t) => String(t.id) === String(keepTrackId)) : -1;
     this.order = this.shuffle
@@ -37,7 +37,7 @@ export class PlayerController {
     } else {
       this.orderIndex = Math.min(this.orderIndex, Math.max(0, this.order.length - 1));
     }
-    this._customTrack = null;
+    if (!preserveCustomTrack) this._customTrack = null;
     eventBus.emit("queue:updated", this.getQueueState());
   }
 
@@ -112,8 +112,13 @@ export class PlayerController {
   setShuffle(enabled, { keepTrackId = null, seed } = {}) {
     const next = Boolean(enabled);
     if (this.shuffle === next) return;
+    // Un ajout manuel a sa propre piste active ; remélanger uniquement la liste
+    // de fond tout en gardant son point de reprise et le même flux audio.
+    const anchorId = this._customTrack
+      ? this.playlist[this.order[this.orderIndex]]?.id
+      : this.currentId;
     this.shuffle = next;
-    this.setPlaylist(this.playlist, { keepTrackId: keepTrackId ?? this.currentId, seed });
+    this.setPlaylist(this.playlist, { keepTrackId: keepTrackId ?? anchorId, seed, preserveCustomTrack: true });
   }
 
   setRepeat(mode) {
@@ -158,19 +163,13 @@ export class PlayerController {
     if (!track) return null;
     this._customTrack = null;
     this.selectByTrackId(track.id);
+    eventBus.emit("queue:updated", this.getQueueState());
     return this.loadCurrent({ autoPlay });
   }
 
   async next() {
     if (!this.playlist.length) return null;
     this._customTrack = null;
-
-    if (this.repeat === "one") {
-      this.engine.seek(0);
-      await this.engine.play();
-      eventBus.emit("queue:updated", this.getQueueState());
-      return this.current;
-    }
 
     if (this.customNext.length > 0) {
       const track = this.customNext.shift();
@@ -198,20 +197,40 @@ export class PlayerController {
 
   async prev() {
     if (!this.playlist.length) return null;
-    this._customTrack = null;
 
     if (this.engine.currentTime > 3) {
       this.engine.seek(0);
       return this.current;
     }
 
+    this._customTrack = null;
     this.orderIndex = Math.max(0, this.orderIndex - 1);
     eventBus.emit("queue:updated", this.getQueueState());
     return this.loadCurrent({ autoPlay: true });
   }
 
   async handleEnded() {
+    if (this.repeat === "one" && this.current) {
+      this.engine.seek(0);
+      await this.engine.play();
+      return this.current;
+    }
     return this.next();
+  }
+
+  async playQueued(index) {
+    const selected = this.peekNext(index + 1)[index];
+    if (!selected) return null;
+    if (index < this.customNext.length) {
+      this._customTrack = this.customNext.splice(0, index + 1).at(-1);
+    } else {
+      const offset = index - this.customNext.length + 1;
+      this.customNext = [];
+      this._customTrack = null;
+      this.orderIndex = (this.orderIndex + offset) % this.order.length;
+    }
+    eventBus.emit("queue:updated", this.getQueueState());
+    return this.loadCurrent({ autoPlay: true });
   }
 
   getActiveList() {

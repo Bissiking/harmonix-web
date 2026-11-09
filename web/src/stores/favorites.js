@@ -1,69 +1,56 @@
 import { reactive } from "vue";
-import { api } from "../api/client.js";
+import { library } from "../api/library.js";
 import { eventBus } from "../core/EventBus.js";
 
-const state = reactive({
-  ids: new Set(),
-  list: [],
-  loaded: false,
-  loading: false,
-});
+const state = reactive({ ids: new Set(), list: [], loaded: false, loading: false, error: null });
+let loadPromise;
+const toggles = new Map();
 
-async function ensureLoaded() {
-  if (state.loaded || state.loading) return;
+export function loadFavorites() {
+  if (loadPromise) return loadPromise;
   state.loading = true;
-  try {
-    const data = await api.get("/api/favorites", { timeout: 8000 });
-    const items = data?.items || [];
+  state.error = null;
+  loadPromise = library.favorites().then((items) => {
     state.list = items;
     state.ids = new Set(items.map((t) => String(t.id)));
     state.loaded = true;
-  } catch {
-    // silencieux
-  } finally {
-    state.loading = false;
-  }
+    return items;
+  }).catch((error) => {
+    state.error = "Impossible de charger vos favoris.";
+    throw error;
+  }).finally(() => { state.loading = false; loadPromise = null; });
+  return loadPromise;
 }
 
-export async function isFavorite(trackId) {
-  await ensureLoaded();
-  return state.ids.has(String(trackId));
+export async function isFavorite(id) {
+  if (!state.loaded) await loadFavorites();
+  return state.ids.has(String(id));
 }
 
-export async function loadFavorites() {
-  state.loaded = false;
-  state.list = [];
-  await ensureLoaded();
-  return state.list;
-}
-
-export async function toggleFavorite(trackId) {
+export function toggleFavorite(trackId) {
   const id = String(trackId);
+  if (toggles.has(id)) return toggles.get(id);
   const was = state.ids.has(id);
-  // optimiste
-  if (was) state.ids.delete(id);
-  else state.ids.add(id);
-  eventBus.emit("favorites:toggled", { trackId: id, isFav: !was });
-  try {
-    const data = await api.post(`/api/favorites/${encodeURIComponent(id)}/toggle`);
-    const final = Boolean(data?.favorite);
-    if (final) state.ids.add(id);
-    else state.ids.delete(id);
-    eventBus.emit("favorites:toggled", { trackId: id, isFav: final });
-    if (state.loaded) {
-      const idx = state.list.findIndex((t) => String(t.id) === id);
-      if (idx >= 0) state.list.splice(idx, 1);
+  if (was) state.ids.delete(id); else state.ids.add(id);
+  const pending = library.toggleFavorite(id).then(async (data) => {
+    const final = Boolean(data.favorite);
+    if (final) {
+      state.ids.add(id);
+      if (!state.list.some((track) => track.id === id)) {
+        try { state.list.unshift(await library.track(id)); } catch { state.loaded = false; }
+      }
+    } else {
+      state.ids.delete(id);
+      state.list = state.list.filter((track) => track.id !== id);
     }
+    eventBus.emit("favorites:toggled", { trackId: id, isFav: final });
     return final;
-  } catch {
-    // rollback
-    if (was) state.ids.add(id);
-    else state.ids.delete(id);
-    eventBus.emit("favorites:toggled", { trackId: id, isFav: was });
-    throw new Error("Favori indisponible");
-  }
+  }).catch((error) => {
+    if (was) state.ids.add(id); else state.ids.delete(id);
+    throw error;
+  }).finally(() => toggles.delete(id));
+  toggles.set(id, pending);
+  return pending;
 }
 
-export function useFavorites() {
-  return { state, isFavorite, loadFavorites, toggleFavorite };
-}
+export function useFavorites() { return { state, isFavorite, loadFavorites, toggleFavorite }; }

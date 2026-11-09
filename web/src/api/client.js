@@ -1,8 +1,8 @@
-// Client HTTP vers Sonora (proxy par le serveur Harmonix).
+// Client HTTP Sonora, sous la même origine via Vite ou la passerelle de production.
 
 const BASE = "";
 
-async function request(path, { method = "GET", body, query, timeout = 15000, raw = false } = {}) {
+async function request(path, { method = "GET", body, query, timeout = 15000, raw = false, keepalive = false } = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
   let url = `${BASE}${path}`;
@@ -22,6 +22,7 @@ async function request(path, { method = "GET", body, query, timeout = 15000, raw
       body: body !== undefined ? JSON.stringify(body) : undefined,
       signal: controller.signal,
       credentials: "same-origin",
+      keepalive,
     });
     if (res.status === 401) {
       const event = new CustomEvent("harmonix:unauthorized");
@@ -64,11 +65,11 @@ export const api = {
 };
 
 export function streamUrl(trackId) {
-  return `/api/tracks/stream/${encodeURIComponent(trackId)}`;
+  return `/api/harmonix/apps/v2/stream/${encodeURIComponent(trackId)}`;
 }
 
 export function coverUrl(cover) {
-  if (!cover) return null;
+  if (!cover) return "/images/default_cover.svg";
   if (/^https?:\/\//i.test(cover)) return cover;
   if (/^\//.test(cover)) return cover.startsWith("/covers/") ? cover : `/covers/${cover.replace(/^\/+/, "")}`;
   return `/covers/${encodeURIComponent(cover)}`;

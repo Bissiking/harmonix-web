@@ -8,59 +8,74 @@ web
 
 ## Stack
 
-Vue 3 + Vite (frontend) / Express (serveur de proxy SSO Kyros + WebSocket Rifts). Vite sert le dev sur `HARMONIX_WEB_PORT`, l'API sur `HARMONIX_PORT`, proxy vers Sonora (médiathèque + streaming).
+Vue 3 / Vite pour le frontend uniquement, HTML Audio et Web Audio pour l’écoute.
+Sonora est le seul backend : sessions Kyros, API et WebSockets. Le proxy Vite est
+réservé au développement et à l’aperçu. Contrat Sonora `/api/harmonix/apps/v2`, commun avec
+Harmonix Apps. Version du client : **5.0.0**.
 
 ## Users
 
-Un petit cercle proche (famille / amis proches) qui partage la même bibliothèque musicale générée Suno & ChatGPT. Chacun s'identifie via Kyros (SSO) et écoute sur son propre appareil — desktop et mobile de manière équivalente.
+Un cercle de proches qui écoute sa bibliothèque personnelle Sonora sur ordinateur
+et téléphone, avec un compte Kyros. Les musiques sont notamment créées avec Suno.
 
 ## Product Purpose
 
-Harmonix est le client web de la médiathèque Sonora : explorer la bibliothèque, rechercher, créer/écouter des playlists et albums, gérer ses favoris et la file d'attente, et écouter ensemble via les Rifts. Le succès, c'est retrouver un morceau en quelques secondes et écouter sans friction, sur n'importe quel écran.
+Faire du web le client prioritaire de Harmonix : retrouver un morceau, l’écouter,
+composer ses playlists et lire les paroles sans friction. L’application Flutter
+évoluera ensuite ; son dépôt sert de référence fonctionnelle, sans être modifié.
 
 ## Positioning
 
-Le rôle de « lecteur privilégié » de la bibliothèque : pas un simple admin de fichiers, mais une vitrine audio haut de gamme qui valorise une bibliothèque personnelle faite main, avec une expérience d'écoute collaborative (Rifts) en plus de l'écoute individuelle.
+Une bibliothèque personnelle et un lecteur musical, avec continuité d’écoute
+entre les pages, favoris, playlists, albums et Rifts. Sonora reste la source de
+vérité musicale ; Kyros reste le fournisseur d’identité.
 
 ## Operating Context
 
-- Sessions Kyros obligatoires : chaque page (y compris l'accueil) redirige vers la connexion si non authentifié.
-- Contexte d'écoute continu : le player reste visible en bas d'écran pendant la navigation (mini-player → player complet), la lecture se poursuit d'une vue à l'autre.
-- Actions récurrentes : lecture immédiate d'une piste, lecture d'une liste (playlist, album, favoris, recherche), ajout à la file, favoris, navigation vers le détail d'un album/morceau.
-- Streaming audio via le proxy Harmonix→Sonora (URL `/api/tracks/stream/:id`) ; couvertures via `/covers/...`.
-- Rifts : session d'écoute collaborative en temps réel (WebSocket relayé par Harmonix).
+Desktop au clavier et mobile tactile, navigation web native. Un seul élément
+audio existe pendant la session ; la lecture continue pendant la navigation.
+Une reprise prépare le morceau et la position sans contourner le geste de lecture
+requis par le navigateur. Les erreurs réseau proposent une nouvelle tentative.
 
 ## Capabilities and Constraints
 
-- Bibliothèque (grille/liste), recherche, favoris, playlists, albums, file d'attente, paramètres (thèmes or/noir, lecture), Rifts.
-- Thème piloté par variables CSS (`--gold`, `--gold-light`, `--bg-dark`, `--bg-surface`, `--text`) avec presets + couleurs personnalisables ; les couleurs or/noir sont un engagement durable.
-- Constraintes API : Sonora exige un token Kyros sur tout `/api/*` ; les routes `auth/*`, le streaming et les couvertures sont gérées par le serveur Express.
-- Terminologie métier : morceau (track), album, playlist, favoris, file d'attente, Rift, Kyros, Sonora.
+- V5 : catalogue, recherche, albums, favoris, playlists éditables, file, lecture
+  complète, paroles texte et LRC, volume, aléatoire, répétition et reprise Sonora.
+- Rifts et SSO délégués à Sonora, avec session HttpOnly ; validation réelle encore nécessaire.
+- Manifeste d’installation, icônes utilisateur et commandes Media Session selon
+  le navigateur. Aucun cache audio hors ligne ni Service Worker à ce stade.
+- Fichiers personnels, playlists mixtes, téléchargements et Night sont les étapes
+  suivantes ; Android Auto et TV restent dans l’app native.
+- Toutes les pages de musique exigent une session ; les jetons sont HttpOnly.
+- La V5 ne renomme pas les versions des protocoles serveur.
 
 ## Brand Commitments
 
-- Nom : Harmonix. Version affichée : « Harmonix: V3.0.0 ». Signature technique : « Propulsé par Sonora ».
-- Harmonix héberge la bibliothèque personnelle de musiques créées avec Suno ; ce n'est ni une radio ni une plateforme de podcasts.
-- Palette or/noir avec presets (Nuit dorée, Classique, Violet dusk, Minuit bleu, Aube rose, Forêt, Cendre) — ne pas bouleverser les couleurs, seulement l'expression.
-- Interface en français (labels, états vides, toasts).
+Moon Resonance, explicitement choisi par l’utilisateur : Midnight Navy #0A0F2B,
+violet #7B5CFF, lavande #C8B4FF et cyan #5EE6FF. Utiliser les logos fournis à la
+racine du projet. Interface française et nom Harmonix. Les variantes Night sont
+réservées à cette fonctionnalité future.
 
 ## Evidence on Hand
 
-- Implémentation frontend complète (composants, vues, stores, CSS) sous `web/src`.
-- Serveur Express (auth Kyros, proxy, WS Rifts) sous `server/`.
-- Sonora (API réelle) dans `D:\DEV\NODEJS\sonora`, studio dans `D:\DEV\NODEJS\sonoraStudio`.
-- Aucun DESIGN.md ni capture approuvée : la refonte est libre sur l'expression tant qu'elle respecte l'or/noir et le mobile.
+Code Vue de ce dépôt ; backend dans `D:/DEV/NODEJS/sonora` ; source Flutter dans
+`C:/Users/mathe/Documents/GitHub/harmonix-apps`, ses PRODUCT.md, DESIGN.md,
+contrats API et captures ; implémentation Sonora dans `D:/DEV/NODEJS/sonora`.
+Périmètre et limites documentés dans `DOCS/V5-MIGRATION.md`.
 
 ## Product Principles
 
-1. L'écoute d'abord : réduire le bruit pour que le morceau et la bibliothèque respirent.
-2. Haut de gamme discret : précision, espace, détails soignés plutôt que décoration.
-3. Hiérarchie évidente : l'œil sait où regarder et quoi faire en une seconde.
-4. Mobile et desktop sont des cibles égales, pas un mode dégradé.
-5. La continuité de lecture guide la navigation (le player reste accessible partout).
+1. Un clic mène au bon morceau ; un changement de page ne coupe pas la lecture.
+2. Le contenu musical, les pochettes et les paroles portent l’interface.
+3. Les pannes réseau ne sont pas présentées comme des listes vides ou une
+   expiration d’identité confirmée.
+4. Mobile et desktop sont des cibles équivalentes ; les commandes supplémentaires
+   du mini-lecteur sont disponibles dans le lecteur complet.
+5. Partager les contrats Sonora avec l’app native pour éviter deux logiques métier.
 
 ## Accessibility & Inclusion
 
-- Contraste or sur noir suffisant pour les textes essentiels et les états actifs.
-- Cibles tactiles confortables sur mobile, navigation clavier sur desktop.
-- Thème sombre unique assumé (pas de mode clair à ce stade).
+Noms accessibles, clavier, focus visible, menu mobile inactif lorsqu’il est fermé,
+retour et maintien du focus à l’ouverture du menu, zones tactiles et respect de
+la réduction des mouvements. Les paroles restent du texte et ne sont pas annoncées
+à chaque tick de lecture.
